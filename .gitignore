@@ -7,3 +7,6 @@ dist/
 .vite/
 coverage/
 *.tsbuildinfo
+public/meta.json
+public/buckets.bin
+public/values.bin
