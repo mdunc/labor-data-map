@@ -71,12 +71,16 @@ export class PlaybackEngine {
     this._lastTime = nowSec;
     const before = Math.round(this._month);
     this._month += dt * this.monthsPerSecondAt1x * this._speed;
+    let endedNow = false;
     if (this._month >= this.nMonths - 1) {
       this._month = this.nMonths - 1;
       this._playing = false;
+      endedNow = true;
     }
     const after = Math.round(this._month);
-    if (after !== before) this.onTick(after);
+    // Fire onTick on natural end too, so the UI can refresh the play button
+    // even when the final tick doesn't cross an integer boundary.
+    if (after !== before || endedNow) this.onTick(after);
     if (this._playing) this.scheduleFrame();
   }
 }
@@ -104,8 +108,6 @@ export function mountTimelineUI(
     <div id="tl-track-wrap" style="flex:1;position:relative;height:24px">
       <input id="tl-scrub" type="range" min="0" max="${months.length - 1}" value="0" step="1"
              style="width:100%;position:absolute;inset:0" />
-      <div id="tl-baseline-marker" title="All values compare to Jan 2006"
-           style="display:none"></div>
     </div>
   `;
 

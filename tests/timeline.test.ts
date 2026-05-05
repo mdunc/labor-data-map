@@ -55,4 +55,20 @@ describe("PlaybackEngine", () => {
     eng.scrubTo(10); // no change
     expect(cb).toHaveBeenCalledTimes(1);
   });
+
+  it("notifies onTick when playback ends mid-frame on the last month", () => {
+    // Regression: the play/pause button is updated by the UI in response to
+    // onTick. If the final tick clamps _month to nMonths-1 without changing
+    // the rounded month, the engine flips _playing→false silently and the
+    // button is left showing "pause".
+    const cb = vi.fn();
+    const eng = new PlaybackEngine({ nMonths: 10, monthsPerSecondAt1x: 1, onTick: cb });
+    eng.play();
+    eng._tick(0);    // anchor
+    eng._tick(8.6);  // before=0, after=9 → fires
+    cb.mockClear();
+    eng._tick(9.5);  // _month clamped 9, _playing→false, before=9, after=9
+    expect(eng.isPlaying).toBe(false);
+    expect(cb).toHaveBeenCalled();
+  });
 });

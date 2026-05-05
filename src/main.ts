@@ -24,7 +24,6 @@ async function main() {
   const timelineEl = document.getElementById("timeline") as HTMLElement;
   const aboutBtn = document.getElementById("about-button") as HTMLElement;
   const aboutModal = document.getElementById("about-modal") as HTMLElement;
-  const mapContainer = document.getElementById("map-container") as HTMLElement;
 
   setupAboutModal(aboutBtn, aboutModal);
   renderLegend(legendEl);
@@ -54,7 +53,7 @@ async function main() {
   const ui = mountTimelineUI(timelineEl, dataset.meta.months, engine);
 
   function fitAndRedraw() {
-    const r = mapContainer.getBoundingClientRect();
+    const r = mapCanvas.getBoundingClientRect();
     mapHandle.resize(r.width, r.height, window.devicePixelRatio || 1);
     mapHandle.draw(engine.month);
   }
