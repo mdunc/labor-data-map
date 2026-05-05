@@ -13,3 +13,9 @@ body { display: grid; grid-template-rows: 48px 1fr 80px; height: 100vh; backgrou
 #about-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 10; }
 #about-modal[hidden] { display: none; }
 .about-content { background: #fff; padding: 24px; max-width: 560px; }
+#timeline button { font-size: 14px; padding: 4px 10px; border: 1px solid #ccc; background: #fff; cursor: pointer; }
+#timeline button.active { background: #333; color: #fff; border-color: #333; }
+#tl-speeds { display: flex; gap: 4px; }
+#tl-play { min-width: 36px; }
+#tl-scrub { -webkit-appearance: none; appearance: none; height: 6px; background: #ddd; border-radius: 3px; }
+#tl-scrub::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; background: #333; border-radius: 50%; cursor: pointer; }
