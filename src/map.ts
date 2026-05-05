@@ -64,7 +64,11 @@ export function createMap(
   pickingCanvas: HTMLCanvasElement,
   topology: Topology,
   dataset: Dataset,
+  options: { rightGutter?: number } = {},
 ): MapHandle {
+  // Reserved space on the right at base zoom (k=1) so the legend sits over empty area.
+  // When zoomed in, the user can pan content across the whole viewport including this strip.
+  const rightGutter = options.rightGutter ?? 0;
   const ctx = visibleCanvas.getContext("2d", { alpha: false })!;
   const pickCtx = pickingCanvas.getContext("2d", { alpha: false, willReadFrequently: true })!;
 
@@ -131,17 +135,35 @@ export function createMap(
 
   function clampTransform(t: Transform): Transform {
     const ck = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, t.k));
-    // Constrain so the map content always fills the viewport (no empty edges).
-    const minTx = widthCss - ck * widthCss;
-    const minTy = heightCss - ck * heightCss;
-    const ctx2 = Math.max(minTx, Math.min(0, t.tx));
-    const cty = Math.max(minTy, Math.min(0, t.ty));
+    // Map content (in base coords) occupies [0, contentW] x [0, contentH].
+    // On screen after transform, content spans [tx, tx + ck*contentW] horizontally.
+    // Allow panning whenever the scaled content is wider than the viewport;
+    // otherwise lock tx so content sits at its natural left-aligned position.
+    const contentW = Math.max(1, widthCss - rightGutter);
+    const contentH = heightCss;
+    const scaledW = ck * contentW;
+    const scaledH = ck * contentH;
+
+    let ctx2: number;
+    if (scaledW >= widthCss) {
+      ctx2 = Math.max(widthCss - scaledW, Math.min(0, t.tx));
+    } else {
+      ctx2 = 0;
+    }
+    let cty: number;
+    if (scaledH >= heightCss) {
+      cty = Math.max(heightCss - scaledH, Math.min(0, t.ty));
+    } else {
+      cty = 0;
+    }
     return { tx: ctx2, ty: cty, k: ck };
   }
 
   function rebuildPaths() {
     projection = geoAlbersUsa();
-    projection.fitSize([widthCss, heightCss], countiesGeo);
+    // Fit into the area left of the legend so the initial layout matches the legend overlay.
+    const fitW = Math.max(1, widthCss - rightGutter);
+    projection.fitSize([fitW, heightCss], countiesGeo);
     const svgPath = geoPath(projection);
     for (const e of entries) {
       e.path = new Path2D(svgPath(e.feature) ?? "");

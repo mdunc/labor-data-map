@@ -39,7 +39,12 @@ async function main() {
     topology = (await res.json()) as Topology;
   } catch (err) { fatal("Couldn't load county geometry.", err); return; }
 
-  const mapHandle = createMap(mapCanvas, pickCanvas, topology, dataset);
+  // Read the legend gutter from CSS so the initial map fit reserves space on the right
+  // for the legend overlay. Zoomed content can still pan across the full viewport.
+  const containerStyle = getComputedStyle(document.getElementById("map-container") as HTMLElement);
+  const gutterRaw = containerStyle.getPropertyValue("--legend-gutter").trim();
+  const rightGutter = gutterRaw.endsWith("px") ? parseFloat(gutterRaw) : parseFloat(gutterRaw) || 0;
+  const mapHandle = createMap(mapCanvas, pickCanvas, topology, dataset, { rightGutter });
   const tooltip = createTooltip(tooltipEl, dataset);
 
   const engine = new PlaybackEngine({
