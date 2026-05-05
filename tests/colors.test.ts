@@ -3,17 +3,18 @@ import { BUCKETS, NO_DATA_BUCKET, valueToBucket, bucketColor, bucketLabel } from
 
 describe("valueToBucket", () => {
   it.each([
-    [50, 0],   // Hyper-Growth
-    [40, 0],   // boundary: ≥40 = Hyper
-    [39.99, 1],// Superstars
-    [20, 1],   // boundary
-    [19.99, 2],// Keeping Pace
-    [10, 2],   // boundary
-    [9.99, 3], // Below-trend
-    [0, 3],    // boundary: 0 = Below-trend
-    [-0.01, 4],// At-risk Contraction
-    [-10, 5],  // boundary: -10 = Structural Loss
-    [-50, 5],  // Structural Loss
+    [50, 0],     // Hyper-Growth
+    [40, 0],     // boundary: ≥40 = Hyper
+    [39.99, 1],  // Superstars
+    [20, 1],     // boundary
+    [19.99, 2],  // Keeping Pace
+    [10, 2],     // boundary
+    [9.99, 3],   // Below-trend
+    [0, 3],      // boundary: 0 = Below-trend
+    [-0.01, 4],  // At-risk Contraction
+    [-10, 4],    // boundary: -10 = At-risk Contraction (inclusive lower of bucket 4)
+    [-10.01, 5], // Structural Loss starts strictly below -10
+    [-50, 5],    // Structural Loss
   ])("maps %s%% to bucket %s", (pct, bucket) => {
     expect(valueToBucket(pct)).toBe(bucket);
   });

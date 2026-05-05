@@ -25,8 +25,6 @@ export const NO_DATA_LABEL = "No data";
 
 export function valueToBucket(pct: number): BucketIndex | typeof NO_DATA_BUCKET {
   if (!Number.isFinite(pct)) return NO_DATA_BUCKET;
-  // -10 is the boundary into Structural Loss: treat the bottom bucket's upper as inclusive.
-  if (pct <= -10) return 5;
   for (const b of BUCKETS) {
     if (pct >= b.lower && pct < b.upper) return b.index;
   }
