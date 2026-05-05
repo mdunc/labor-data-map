@@ -1,0 +1,6 @@
+series_id	area_type_code	area_code	measure_code	seasonal	srd_code	series_title
+LAUCN010010000000003	F	CN0100100000000	03	U	01	Unemployment Rate: Autauga County, AL
+LAUCN010010000000004	F	CN0100100000000	04	U	01	Unemployment: Autauga County, AL
+LAUCN010010000000005	F	CN0100100000000	05	U	01	Employment: Autauga County, AL
+LAUCN010010000000006	F	CN0100100000000	06	U	01	Labor Force: Autauga County, AL
+LAUCN010030000000006	F	CN0100300000000	06	U	01	Labor Force: Baldwin County, AL
