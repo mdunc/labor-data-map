@@ -12,7 +12,7 @@ Deployed via static hosting — see [Deploying](#deploying).
 
 ```sh
 npm install
-npm run build:topo     # copy us-atlas TopoJSON to public/
+npm run build:topo     # build TopoJSON from Census 2024 cartographic boundaries
 npm run build:data     # fetch BLS LAUS, compute, pack to public/
 npm run dev            # http://localhost:5173
 ```
@@ -29,7 +29,7 @@ The dataset is a fixed window (Jan 2010 – Dec 2025). To pick up BLS revisions 
 
 ## Source
 
-- Geometry: [`us-atlas`](https://github.com/topojson/us-atlas) (1:10M).
+- Geometry: [Census Bureau 2024 cartographic boundary files](https://www.census.gov/geographies/mapping-files/time-series/geo/cartographic-boundary.html) (1:5M), simplified to ~3% via `mapshaper`.
 - Data: BLS [Local Area Unemployment Statistics](https://www.bls.gov/lau/), county-level, NSA labor force series.
 
 ## Deploying
@@ -81,7 +81,7 @@ src/
   styles.css
 scripts/
   build-dataset.ts CLI: fetch BLS, validate, pack
-  copy-topojson.ts copy us-atlas to public/
+  build-topojson.ts CLI: download Census 2024 boundaries, simplify, write topojson
   lib/
     bls.ts         BLS flat-file parsers
     pack.ts        baseline math + binary packing
