@@ -43,7 +43,7 @@ const stubCtx = new Proxy(
 HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement) {
   (stubCtx as unknown as { canvas: HTMLCanvasElement }).canvas = this;
   return stubCtx as unknown as CanvasRenderingContext2D;
-} as typeof HTMLCanvasElement.prototype.getContext;
+} as unknown as typeof HTMLCanvasElement.prototype.getContext;
 
 function makeFixtureTopology() {
   const counties: FeatureCollection<Polygon, { name: string }> = {
