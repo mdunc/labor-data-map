@@ -6,6 +6,12 @@ import type { FeatureCollection, MultiPolygon, Polygon, Feature } from "geojson"
 import { Dataset } from "./data.ts";
 import { bucketColor, bucketColorRgb } from "./colors.ts";
 
+export interface Transform {
+  tx: number;
+  ty: number;
+  k: number;
+}
+
 export interface MapHandle {
   resize(width: number, height: number, dpr: number): void;
   /** monthIdx may be fractional during playback to fade between adjacent months. */
@@ -13,6 +19,13 @@ export interface MapHandle {
   hitTest(x: number, y: number): number | undefined; // returns countyIdx or undefined
   getCountyName(countyIdx: number): string | undefined;
   getCountyFips(countyIdx: number): string | undefined;
+  /** Set pan/zoom transform. Values are clamped so the map always fills the viewport. */
+  setTransform(t: Transform): Transform;
+  getTransform(): Transform;
+  getViewport(): { width: number; height: number };
+  /** Min/max zoom factor (k). */
+  readonly minZoom: number;
+  readonly maxZoom: number;
 }
 
 interface CountyEntry {
@@ -110,6 +123,22 @@ export function createMap(
   let statesPath: Path2D | null = null;
   let countyMeshPath: Path2D | null = null;
 
+  const MIN_ZOOM = 1;
+  const MAX_ZOOM = 32;
+  let tx = 0;
+  let ty = 0;
+  let k = 1;
+
+  function clampTransform(t: Transform): Transform {
+    const ck = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, t.k));
+    // Constrain so the map content always fills the viewport (no empty edges).
+    const minTx = widthCss - ck * widthCss;
+    const minTy = heightCss - ck * heightCss;
+    const ctx2 = Math.max(minTx, Math.min(0, t.tx));
+    const cty = Math.max(minTy, Math.min(0, t.ty));
+    return { tx: ctx2, ty: cty, k: ck };
+  }
+
   function rebuildPaths() {
     projection = geoAlbersUsa();
     projection.fitSize([widthCss, heightCss], countiesGeo);
@@ -126,6 +155,8 @@ export function createMap(
     ctx.scale(dprCached, dprCached);
     ctx.fillStyle = "#838790";
     ctx.fillRect(0, 0, widthCss, heightCss);
+    ctx.translate(tx, ty);
+    ctx.scale(k, k);
 
     const lo = Math.floor(monthIdx);
     const hi = Math.min(lo + 1, dataset.nMonths - 1);
@@ -154,15 +185,15 @@ export function createMap(
       ctx.fillStyle = fill;
       if (e.path) ctx.fill(e.path);
     }
-    // Pass 2: county borders
+    // Pass 2: county borders (line width compensated for zoom so it stays ~constant on screen)
     if (countyMeshPath) {
-      ctx.lineWidth = 0.5;
+      ctx.lineWidth = 0.5 / k;
       ctx.strokeStyle = "#000";
       ctx.stroke(countyMeshPath);
     }
     // Pass 3: state borders
     if (statesPath) {
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 1 / k;
       ctx.strokeStyle = "#000";
       ctx.stroke(statesPath);
     }
@@ -192,11 +223,17 @@ export function createMap(
     pickingCanvas.height = Math.round(height * dpr);
     rebuildPaths();
     rebuildPicking();
+    // Re-clamp current transform against new viewport bounds.
+    const c = clampTransform({ tx, ty, k });
+    tx = c.tx; ty = c.ty; k = c.k;
   }
 
   function hitTest(x: number, y: number): number | undefined {
-    const px = Math.round(x * dprCached);
-    const py = Math.round(y * dprCached);
+    // Invert the pan/zoom transform so we sample the picking canvas (rendered at base scale).
+    const mx = (x - tx) / k;
+    const my = (y - ty) / k;
+    const px = Math.round(mx * dprCached);
+    const py = Math.round(my * dprCached);
     if (px < 0 || py < 0 || px >= pickingCanvas.width || py >= pickingCanvas.height) return undefined;
     const [r, g, b] = pickCtx.getImageData(px, py, 1, 1).data;
     if (r === 0 && g === 0 && b === 0) return undefined;
@@ -215,5 +252,20 @@ export function createMap(
     getCountyFips(c) {
       return idxToEntry.get(c)?.fips;
     },
+    setTransform(t) {
+      const c = clampTransform(t);
+      tx = c.tx;
+      ty = c.ty;
+      k = c.k;
+      return { tx, ty, k };
+    },
+    getTransform() {
+      return { tx, ty, k };
+    },
+    getViewport() {
+      return { width: widthCss, height: heightCss };
+    },
+    minZoom: MIN_ZOOM,
+    maxZoom: MAX_ZOOM,
   };
 }
