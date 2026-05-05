@@ -23,14 +23,19 @@ export interface PackResult {
 
 /**
  * Builds a packed dataset from county labor-force series.
- * - Baseline = first entry in `months` (e.g., "2006-01"). Counties without a baseline value
+ * - Baseline = first entry in `months` (e.g., "2010-01"). Counties without a baseline value
  *   are marked NO_DATA_BUCKET for every month.
  * - Layout is month-major: index = monthIdx * nCounties + countyIdx
+ * - If `month0Comparison` is provided (e.g. "2006-01"), the first month's % change is
+ *   computed against that prior month rather than the baseline. This lets the initial
+ *   frame show pre-window context (e.g. recession impact) instead of a flat 0%. Counties
+ *   missing the prior value at month 0 fall back to 0% (bucket 3).
  */
 export function packDataset(
   series: Map<string, Map<string, number>>,
   months: string[],
   version: string,
+  month0Comparison?: string,
 ): PackResult {
   const counties = [...series.keys()].sort();
   const nMonths = months.length;
@@ -52,7 +57,27 @@ export function packDataset(
       }
       continue;
     }
-    for (let m = 0; m < nMonths; m++) {
+
+    // Month 0: optionally compare against an earlier reference month.
+    if (month0Comparison) {
+      const prior = countyMap.get(month0Comparison);
+      const offset = c;
+      if (prior === undefined || prior <= 0) {
+        buckets[offset] = valueToBucket(0);
+        values[offset] = 0;
+      } else {
+        const pct = ((baseline - prior) / prior) * 100;
+        buckets[offset] = valueToBucket(pct);
+        values[offset] = pct;
+      }
+    } else {
+      // Default: month 0 vs. itself = 0%
+      buckets[c] = valueToBucket(0);
+      values[c] = 0;
+    }
+
+    // Months 1+ always compare against the in-window baseline.
+    for (let m = 1; m < nMonths; m++) {
       const v = countyMap.get(months[m]);
       const offset = m * nCounties + c;
       if (v === undefined) {
@@ -60,15 +85,19 @@ export function packDataset(
         values[offset] = Number.NaN;
       } else {
         const pct = ((v - baseline) / baseline) * 100;
-        const b = valueToBucket(pct);
-        buckets[offset] = b;
+        buckets[offset] = valueToBucket(pct);
         values[offset] = pct;
       }
     }
   }
 
   return {
-    meta: { months, counties, version },
+    meta: {
+      months,
+      counties,
+      version,
+      ...(month0Comparison ? { month0Comparison } : {}),
+    },
     buckets,
     values,
   };

@@ -14,6 +14,7 @@ const FILES = ["la.series", "la.area", "la.data.64.County"];
 
 const START = "2010-01";
 const END = "2025-12";
+const MONTH0_COMPARISON = "2006-01";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = join(__dirname, "..", "public");
@@ -45,7 +46,7 @@ async function main() {
 
   const months = buildMonthList(START, END);
   const version = new Date().toISOString().slice(0, 10);
-  const { meta, buckets, values } = packDataset(joined, months, version);
+  const { meta, buckets, values } = packDataset(joined, months, version, MONTH0_COMPARISON);
 
   // Validate
   if (meta.counties.length < 3000) {

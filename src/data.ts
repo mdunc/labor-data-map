@@ -2,6 +2,8 @@ export interface Meta {
   months: string[];   // "YYYY-MM" in chronological order
   counties: string[]; // 5-digit FIPS in fixed order
   version: string;
+  /** If set, month 0's % change is computed against this earlier month instead of itself. */
+  month0Comparison?: string;
 }
 
 export class Dataset {
