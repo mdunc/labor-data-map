@@ -12,7 +12,7 @@ import { buildMonthList, packDataset } from "./lib/pack.ts";
 const BLS_BASE = "https://download.bls.gov/pub/time.series/la";
 const FILES = ["la.series", "la.area", "la.data.64.County"];
 
-const START = "2006-01";
+const START = "2010-01";
 const END = "2025-12";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -51,8 +51,8 @@ async function main() {
   if (meta.counties.length < 3000) {
     throw new Error(`Too few counties: ${meta.counties.length} (expected ~3,143)`);
   }
-  if (meta.months.length !== 240) {
-    throw new Error(`Expected 240 months, got ${meta.months.length}`);
+  if (meta.months.length !== 192) {
+    throw new Error(`Expected 192 months, got ${meta.months.length}`);
   }
   for (let i = 0; i < buckets.length; i++) {
     const b = buckets[i];

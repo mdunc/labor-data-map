@@ -104,7 +104,7 @@ export function mountTimelineUI(
     <div id="tl-track-wrap" style="flex:1;position:relative;height:24px">
       <input id="tl-scrub" type="range" min="0" max="${months.length - 1}" value="0" step="1"
              style="width:100%;position:absolute;inset:0" />
-      <div id="tl-baseline-marker" title="Baseline (Jan 2006)"
+      <div id="tl-baseline-marker" title="Baseline (Jan 2010)"
            style="position:absolute;left:0;top:0;width:2px;height:100%;background:#1a9850"></div>
     </div>
   `;

@@ -1,6 +1,6 @@
-# US County Labor Force Map (2006–2025)
+# US County Labor Force Map (2010–2025)
 
-An interactive, static-site choropleth showing 20 years of US county-level labor force change vs. January 2006.
+An interactive, static-site choropleth showing 16 years of US county-level labor force change vs. January 2010.
 
 Hover any county for its name and current value. Use the timeline at the bottom to play, pause, scrub, and adjust speed. Counties are colored by bucketed % change for the displayed month, from green (Hyper-Growth, > 40%) to red (Structural Loss, < -10%).
 
@@ -21,7 +21,7 @@ npm run dev            # http://localhost:5173
 
 ## Data refresh
 
-The dataset is a fixed window (Jan 2006 – Dec 2025). To pick up BLS revisions or extend the window:
+The dataset is a fixed window (Jan 2010 – Dec 2025). To pick up BLS revisions or extend the window:
 
 1. Edit `START` / `END` in `scripts/build-dataset.ts` if extending.
 2. Run `npm run build:data`.
