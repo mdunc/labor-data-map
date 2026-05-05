@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build:data": "tsx scripts/build-dataset.ts"
+    "build:data": "tsx scripts/build-dataset.ts",
+    "build:topo": "tsx scripts/copy-topojson.ts",
+    "prebuild": "npm run build:topo"
   },
   "dependencies": {
     "d3-array": "^3.2.4",

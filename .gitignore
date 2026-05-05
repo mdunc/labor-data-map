@@ -10,3 +10,4 @@ coverage/
 public/meta.json
 public/buckets.bin
 public/values.bin
+public/counties.topo.json
