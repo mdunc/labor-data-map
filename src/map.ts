@@ -4,10 +4,11 @@ import type { Topology, GeometryCollection } from "topojson-specification";
 import type { FeatureCollection, MultiPolygon, Polygon, Feature } from "geojson";
 
 import { Dataset } from "./data.ts";
-import { bucketColor } from "./colors.ts";
+import { bucketColor, bucketColorRgb } from "./colors.ts";
 
 export interface MapHandle {
   resize(width: number, height: number, dpr: number): void;
+  /** monthIdx may be fractional during playback to fade between adjacent months. */
   draw(monthIdx: number): void;
   hitTest(x: number, y: number): number | undefined; // returns countyIdx or undefined
   getCountyName(countyIdx: number): string | undefined;
@@ -123,13 +124,34 @@ export function createMap(
   function draw(monthIdx: number) {
     ctx.save();
     ctx.scale(dprCached, dprCached);
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = "#838790";
     ctx.fillRect(0, 0, widthCss, heightCss);
+
+    const lo = Math.floor(monthIdx);
+    const hi = Math.min(lo + 1, dataset.nMonths - 1);
+    const t = monthIdx - lo;
+    const blend = t > 0 && hi !== lo;
 
     // Pass 1: fills
     for (const [c, e] of idxToEntry) {
-      const b = dataset.bucketAt(monthIdx, c);
-      ctx.fillStyle = bucketColor(b);
+      const ba = dataset.bucketAt(lo, c);
+      let fill: string;
+      if (!blend) {
+        fill = bucketColor(ba);
+      } else {
+        const bb = dataset.bucketAt(hi, c);
+        if (ba === bb) {
+          fill = bucketColor(ba);
+        } else {
+          const [r1, g1, b1] = bucketColorRgb(ba);
+          const [r2, g2, b2] = bucketColorRgb(bb);
+          const r = Math.round(r1 + (r2 - r1) * t);
+          const g = Math.round(g1 + (g2 - g1) * t);
+          const b = Math.round(b1 + (b2 - b1) * t);
+          fill = `rgb(${r},${g},${b})`;
+        }
+      }
+      ctx.fillStyle = fill;
       if (e.path) ctx.fill(e.path);
     }
     // Pass 2: county borders

@@ -46,8 +46,10 @@ async function main() {
     nMonths: dataset.nMonths,
     monthsPerSecondAt1x: 4,
     onTick: (m) => {
-      mapHandle.draw(m);
       ui.setMonth(m);
+    },
+    onFrame: (m) => {
+      mapHandle.draw(m);
     },
   });
   const ui = mountTimelineUI(timelineEl, dataset.meta.months, engine);

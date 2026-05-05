@@ -4,6 +4,8 @@ export interface PlaybackEngineOptions {
   nMonths: number;
   monthsPerSecondAt1x: number;
   onTick: (monthIdx: number) => void;
+  /** Fires every animation frame during play with the fractional month, for smooth redraws. */
+  onFrame?: (monthFloat: number) => void;
 }
 
 export class PlaybackEngine {
@@ -15,14 +17,17 @@ export class PlaybackEngine {
   readonly nMonths: number;
   private monthsPerSecondAt1x: number;
   private onTick: (m: number) => void;
+  private onFrame?: (monthFloat: number) => void;
 
   constructor(opts: PlaybackEngineOptions) {
     this.nMonths = opts.nMonths;
     this.monthsPerSecondAt1x = opts.monthsPerSecondAt1x;
     this.onTick = opts.onTick;
+    this.onFrame = opts.onFrame;
   }
 
   get month(): number { return Math.round(this._month); }
+  get monthFloat(): number { return this._month; }
   get speed(): number { return this._speed; }
   get isPlaying(): boolean { return this._playing; }
 
@@ -36,21 +41,30 @@ export class PlaybackEngine {
   }
 
   pause() {
-    this._playing = false;
-    if (this.rafHandle !== null) {
-      cancelAnimationFrame(this.rafHandle);
-      this.rafHandle = null;
+    this.stopPlayback();
+    // Snap any mid-fade redraw back to the integer month the UI displays.
+    const rounded = Math.round(this._month);
+    if (this._month !== rounded) {
+      this._month = rounded;
+      this.onFrame?.(rounded);
     }
   }
 
   scrubTo(monthIdx: number) {
-    this.pause();
+    this.stopPlayback();
     const clamped = Math.max(0, Math.min(this.nMonths - 1, Math.round(monthIdx)));
-    if (clamped !== Math.round(this._month)) {
-      this._month = clamped;
-      this.onTick(clamped);
-    } else {
-      this._month = clamped;
+    const prevRounded = Math.round(this._month);
+    const positionChanged = this._month !== clamped;
+    this._month = clamped;
+    if (positionChanged) this.onFrame?.(clamped);
+    if (clamped !== prevRounded) this.onTick(clamped);
+  }
+
+  private stopPlayback() {
+    this._playing = false;
+    if (this.rafHandle !== null) {
+      cancelAnimationFrame(this.rafHandle);
+      this.rafHandle = null;
     }
   }
 
@@ -78,6 +92,7 @@ export class PlaybackEngine {
       endedNow = true;
     }
     const after = Math.round(this._month);
+    this.onFrame?.(this._month);
     // Fire onTick on natural end too, so the UI can refresh the play button
     // even when the final tick doesn't cross an integer boundary.
     if (after !== before || endedNow) this.onTick(after);

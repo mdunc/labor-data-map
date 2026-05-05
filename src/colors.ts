@@ -40,3 +40,21 @@ export function bucketLabel(idx: number): string {
   if (idx === NO_DATA_BUCKET) return NO_DATA_LABEL;
   return BUCKETS[idx]?.label ?? NO_DATA_LABEL;
 }
+
+function hexToRgb(hex: string): readonly [number, number, number] {
+  const h = hex.replace("#", "");
+  return [
+    parseInt(h.slice(0, 2), 16),
+    parseInt(h.slice(2, 4), 16),
+    parseInt(h.slice(4, 6), 16),
+  ];
+}
+
+const BUCKET_RGB: readonly (readonly [number, number, number])[] =
+  BUCKETS.map((b) => hexToRgb(b.color));
+const NO_DATA_RGB = hexToRgb(NO_DATA_COLOR);
+
+export function bucketColorRgb(idx: number): readonly [number, number, number] {
+  if (idx === NO_DATA_BUCKET) return NO_DATA_RGB;
+  return BUCKET_RGB[idx] ?? NO_DATA_RGB;
+}

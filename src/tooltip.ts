@@ -25,7 +25,7 @@ export function createTooltip(el: HTMLElement, dataset: Dataset): Tooltip {
 
     el.innerHTML = `
       <div style="font-weight:600">${countyName}</div>
-      <div style="color:#666;font-size:11px">${monthLabel}</div>
+      <div style="color:#a8a8a8;font-size:11px">${monthLabel}</div>
       <div style="margin-top:4px">
         <span style="display:inline-block;width:10px;height:10px;background:${color};margin-right:4px;vertical-align:middle"></span>
         <span style="vertical-align:middle">${label}: <strong>${pctText}</strong></span>
