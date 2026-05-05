@@ -257,10 +257,38 @@ export function createMap(
     const px = Math.round(mx * dprCached);
     const py = Math.round(my * dprCached);
     if (px < 0 || py < 0 || px >= pickingCanvas.width || py >= pickingCanvas.height) return undefined;
-    const [r, g, b] = pickCtx.getImageData(px, py, 1, 1).data;
-    if (r === 0 && g === 0 && b === 0) return undefined;
-    const idx = rgbToIndex(r, g, b);
-    return idxToEntry.has(idx) ? idx : undefined;
+
+    // The picking canvas gives a fast candidate, but Canvas2D antialiases path
+    // fills, so border pixels between two counties get a blended RGB that
+    // decodes to some unrelated (but valid) county idx — causing hover at zoom
+    // to show data for a county thousands of miles away. To filter these out,
+    // verify the candidate with an exact point-in-polygon test, and if it
+    // fails, fall back to checking a small ring of nearby picking pixels.
+    const tryAt = (sx: number, sy: number): number | undefined => {
+      if (sx < 0 || sy < 0 || sx >= pickingCanvas.width || sy >= pickingCanvas.height) return undefined;
+      const [r, g, b] = pickCtx.getImageData(sx, sy, 1, 1).data;
+      if (r === 0 && g === 0 && b === 0) return undefined;
+      const idx = rgbToIndex(r, g, b);
+      const entry = idxToEntry.get(idx);
+      if (!entry || !entry.path) return undefined;
+      // pickCtx transform is identity here (rebuildPicking saves/restores), so
+      // isPointInPath uses the path's native CSS-coord space.
+      return pickCtx.isPointInPath(entry.path, mx, my) ? idx : undefined;
+    };
+
+    const center = tryAt(px, py);
+    if (center !== undefined) return center;
+    // Border / AA pixel: sweep a small ring at increasing radius (in device px).
+    for (let r = 1; r <= 3; r++) {
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; // ring only
+          const got = tryAt(px + dx, py + dy);
+          if (got !== undefined) return got;
+        }
+      }
+    }
+    return undefined;
   }
 
   return {
