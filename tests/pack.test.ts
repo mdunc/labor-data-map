@@ -98,32 +98,31 @@ describe("packDataset", () => {
     expect(buckets[2]).toBe(0); // +50% → Hyper
   });
 
-  it("uses month0Comparison for the first month only", () => {
-    // baseline = 2010-01; prior comparison = 2006-01
+  it("supports a baselineMonth outside the timeline window", () => {
+    // Window = [2010-01, 2010-02]; baseline = 2006-01 (earlier than window).
     const series = new Map<string, Map<string, number>>([
-      // 01001: 2006=80, 2010=100 (+25% from 2006), 2010-02 = 110 (+10% from 2010)
-      ["01001", new Map([["2006-01", 80], ["2010-01", 100], ["2010-02", 110]])],
-      // 02001: 2006=200, 2010=100 (-50% from 2006), 2010-02 = 80 (-20% from 2010)
-      ["02001", new Map([["2006-01", 200], ["2010-01", 100], ["2010-02", 80]])],
-      // 03001: missing 2006 → fall back to 0% at month 0
+      // 01001: 2006=80, 2010-01=100 (+25%), 2010-02=120 (+50%)
+      ["01001", new Map([["2006-01", 80], ["2010-01", 100], ["2010-02", 120]])],
+      // 02001: 2006=200, 2010-01=100 (-50%), 2010-02=180 (-10%)
+      ["02001", new Map([["2006-01", 200], ["2010-01", 100], ["2010-02", 180]])],
+      // 03001: missing 2006 baseline → entire row marked NO_DATA
       ["03001", new Map([["2010-01", 100], ["2010-02", 105]])],
     ]);
     const months = ["2010-01", "2010-02"];
     const { meta, buckets, values } = packDataset(series, months, "test", "2006-01");
-    expect(meta.month0Comparison).toBe("2006-01");
-    // m=0: vs. 2006
-    expect(values[0]).toBeCloseTo(25);   // 01001 @ +25%
-    expect(buckets[0]).toBe(1);          // Superstars [20, 40)
-    expect(values[1]).toBeCloseTo(-50);  // 02001 @ -50%
-    expect(buckets[1]).toBe(5);          // Structural Loss
-    expect(values[2]).toBeCloseTo(0);    // 03001 falls back to 0%
-    expect(buckets[2]).toBe(3);
-    // m=1: vs. 2010
-    expect(values[3]).toBeCloseTo(10);   // 01001 @ +10%
-    expect(buckets[3]).toBe(2);
-    expect(values[4]).toBeCloseTo(-20);  // 02001 @ -20%
-    expect(buckets[4]).toBe(5);          // Structural Loss (< -10)
-    expect(values[5]).toBeCloseTo(5);    // 03001 @ +5%
-    expect(buckets[5]).toBe(3);
+    expect(meta.baselineMonth).toBe("2006-01");
+    // 01001: every month vs. 80
+    expect(values[0]).toBeCloseTo(25);   // bucket 1 (Superstars)
+    expect(buckets[0]).toBe(1);
+    expect(values[3]).toBeCloseTo(50);   // bucket 0 (Hyper-Growth, ≥40)
+    expect(buckets[3]).toBe(0);
+    // 02001: every month vs. 200
+    expect(values[1]).toBeCloseTo(-50);  // bucket 5 (Structural Loss, <-10)
+    expect(buckets[1]).toBe(5);
+    expect(values[4]).toBeCloseTo(-10);  // bucket 4 (At-risk, [-10, 0))
+    expect(buckets[4]).toBe(4);
+    // 03001: no baseline → all months are NO_DATA (255)
+    expect(buckets[2]).toBe(255);
+    expect(buckets[5]).toBe(255);
   });
 });

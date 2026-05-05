@@ -23,27 +23,23 @@ export interface PackResult {
 
 /**
  * Builds a packed dataset from county labor-force series.
- * - Baseline = first entry in `months` (e.g., "2010-01"). Counties without a baseline value
- *   are marked NO_DATA_BUCKET for every month.
+ * - Every month's % change is computed against `baselineMonth` (default: months[0]).
+ *   The baseline does not have to appear in `months` — it can be an earlier month
+ *   that exists in the source series but lies before the timeline window.
+ * - Counties without a baseline value are marked NO_DATA_BUCKET for every month.
  * - Layout is month-major: index = monthIdx * nCounties + countyIdx
- * - If `month0Comparison` is provided (e.g. "2006-01"), the first month's % change is
- *   computed against that prior month rather than the baseline. This lets the initial
- *   frame show pre-window context (e.g. recession impact) instead of a flat 0%. Counties
- *   missing the prior value at month 0 fall back to 0% (bucket 3).
  */
 export function packDataset(
   series: Map<string, Map<string, number>>,
   months: string[],
   version: string,
-  month0Comparison?: string,
+  baselineMonth: string = months[0],
 ): PackResult {
   const counties = [...series.keys()].sort();
   const nMonths = months.length;
   const nCounties = counties.length;
   const buckets = new Uint8Array(nMonths * nCounties);
   const values = new Float32Array(nMonths * nCounties);
-
-  const baselineMonth = months[0];
 
   for (let c = 0; c < nCounties; c++) {
     const fips = counties[c];
@@ -57,27 +53,7 @@ export function packDataset(
       }
       continue;
     }
-
-    // Month 0: optionally compare against an earlier reference month.
-    if (month0Comparison) {
-      const prior = countyMap.get(month0Comparison);
-      const offset = c;
-      if (prior === undefined || prior <= 0) {
-        buckets[offset] = valueToBucket(0);
-        values[offset] = 0;
-      } else {
-        const pct = ((baseline - prior) / prior) * 100;
-        buckets[offset] = valueToBucket(pct);
-        values[offset] = pct;
-      }
-    } else {
-      // Default: month 0 vs. itself = 0%
-      buckets[c] = valueToBucket(0);
-      values[c] = 0;
-    }
-
-    // Months 1+ always compare against the in-window baseline.
-    for (let m = 1; m < nMonths; m++) {
+    for (let m = 0; m < nMonths; m++) {
       const v = countyMap.get(months[m]);
       const offset = m * nCounties + c;
       if (v === undefined) {
@@ -92,12 +68,7 @@ export function packDataset(
   }
 
   return {
-    meta: {
-      months,
-      counties,
-      version,
-      ...(month0Comparison ? { month0Comparison } : {}),
-    },
+    meta: { months, counties, version, baselineMonth },
     buckets,
     values,
   };

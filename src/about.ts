@@ -2,9 +2,9 @@ export function setupAboutModal(button: HTMLElement, modal: HTMLElement): void {
   modal.innerHTML = `
     <div class="about-content">
       <h2 style="margin-top:0">About this map</h2>
-      <p>This map shows monthly US county labor force change vs. <strong>January 2010</strong> across the 16-year window
-      Jan 2010 – Dec 2025. The very first frame (Jan 2010) is shown vs. <strong>January 2006</strong> instead, so the
-      pre-recession reference is visible at a glance; every subsequent month uses Jan 2010 as the baseline.
+      <p>This map shows monthly US county labor force change vs. <strong>January 2006</strong> across the timeline
+      window Jan 2010 – Dec 2025. Jan 2006 anchors a pre-recession reference point so the recession impact
+      is visible from the very first frame and every subsequent month is comparable to that same anchor.
       Data is from the Bureau of Labor Statistics
       <a href="https://www.bls.gov/lau/" target="_blank" rel="noreferrer">Local Area Unemployment Statistics (LAUS)</a>
       program — county-level <em>not seasonally adjusted</em> labor force series.</p>

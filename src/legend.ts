@@ -8,7 +8,7 @@ function rangeLabel(lower: number, upper: number): string {
 
 export function renderLegend(el: HTMLElement): void {
   const rows: string[] = [];
-  rows.push(`<div style="font-weight:600;margin-bottom:6px">Labor Force vs. Jan 2010</div>`);
+  rows.push(`<div style="font-weight:600;margin-bottom:6px">Labor Force vs. Jan 2006</div>`);
   for (const b of BUCKETS) {
     rows.push(
       `<div style="display:flex;align-items:center;gap:6px;margin:2px 0">
